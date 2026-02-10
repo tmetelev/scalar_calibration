@@ -25,6 +25,17 @@ class Imu():
                 res.append(r)
         return res
     
+    def generate_sector_rotation(self, v_points=5, h_points=9):
+        res = []
+        for phi in np.linspace(0, np.pi, h_points):
+            for psi in np.linspace(-np.pi / 2, 0, v_points):
+                w = np.array([[G * np.cos(psi) * np.cos(phi)], [G * np.sin(psi)], [G * np.cos(psi) * np.sin(phi)]])
+                r = self.acc_to_raw(w)
+                if self.__noise != 0:
+                    r += np.random.normal(0, self.__noise, size=(3, 1))
+                res.append(r)
+        return res
+    
     def acc_to_raw(self, w):
         return np.linalg.inv(self.__M) @ (w - self.__w0)
     
