@@ -3,15 +3,7 @@
 
 
 import numpy as np
-from model import Imu
-
-
-def make_pd(A, eps=1e-8):
-    A = 0.5 * (A + A.T)
-    w, v = np.linalg.eigh(A)
-    w = np.maximum(w, eps)
-    return v @ np.diag(w) @ v.T
-
+from utils.model import Imu
 
 
 def mnk(r):
@@ -43,13 +35,17 @@ def mnk(r):
     ])
     b = np.array([[theta[6, 0], theta[7, 0], theta[8, 0]]]).T
     eigvals = np.linalg.eigvalsh(A)
-    if not np.all(eigvals > 1e-8):
-        A = make_pd(A)
-        print('hhh')
+    print(eigvals)
+    if not np.all(eigvals > 1e-30):
+        print('Calibration Failed: A < 0')
+        print()
+        return np.zeros((3, 3)), np.zeros((3, 1))
     M = np.linalg.cholesky(A).T
     
     w0 = np.linalg.solve(M.T, b)
-    print(theta[9, 0], w0.T @ w0)
+    M[1, 0] = M[0, 1]
+    M[2, 0] = M[0, 2]
+    M[2, 1] = M[1, 2]
     imu = Imu(M, w0)
     scale_w = imu.raw_to_acc(r[0])
     k = np.sqrt((9.81 ** 2) / (scale_w.T @ scale_w))
@@ -58,6 +54,6 @@ def mnk(r):
     return M, w0
 
 
-def nmnk(r, imu):
+def test_rotation():
     pass
 

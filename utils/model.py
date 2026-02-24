@@ -41,3 +41,6 @@ class Imu():
     
     def raw_to_acc(self, r):
         return self.__M @ r + self.__w0
+    
+    def get_params(self):
+        return self.__M, self.__w0
