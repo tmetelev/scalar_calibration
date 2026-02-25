@@ -25,7 +25,7 @@ def mnk(r):
             2 * z,
             1
         ]
-    G = np.ones((n, 1)) * 1
+    G = np.ones((n, 1)) * 9.81
     # theta = np.linalg.inv(phi.T @ phi) @ phi.T @ G
     theta = np.linalg.pinv(phi) @ G
     A = np.array([
@@ -54,6 +54,31 @@ def mnk(r):
     return M, w0
 
 
-def test_rotation():
-    pass
+def nmnk(r, iterations=10):
+    n = len(r)
+    q = np.array([[1, 1, 1, 0, 0, 0, 0, 0, 0]]).T
+    G2 = np.ones((n, 1)) * 9.81 * 9.81
+    H = np.zeros((n, 9))
+    W2 = np.zeros((n, 1))
+    M = np.zeros((3, 3))
+    w0 = np.zeros((3, 1))
+    for i in range(iterations):
+        M = np.array([
+                [q[0, 0], q[3, 0], q[4, 0]],
+                [q[3, 0], q[1, 0], q[5, 0]],
+                [q[4, 0], q[5, 0], q[2, 0]]
+            ])
+        w0 = np.array([[q[6, 0], q[7, 0], q[8, 0]]]).T
+        for j in range(n):
+            rx = r[j][0, 0]
+            ry = r[j][1, 0]
+            rz = r[j][2, 0]
+            pW = M @ r[j] + w0 
+            W2[j, 0] = pW.T @ pW
+            H[j] = 2 * np.array([pW[0, 0] * rx, pW[1, 0] * ry, pW[2, 0] * rz,
+                                  pW[0, 0] * ry + pW[1, 0] * rx, pW[0, 0] * rz + pW[2, 0] * rx, pW[2, 0] * ry + pW[1, 0] * rz,
+                                    pW[0, 0], pW[1, 0], pW[2, 0]])
+        dq = np.linalg.pinv(H) @ (G2 - W2)
+        q = q + dq
+    return M, w0
 
