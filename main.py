@@ -9,9 +9,9 @@ from utils.metrics import *
 from utils.utils import *
 
 
-mode = int(input('Input mode:\n 1 - modeling,\n 2 - reading from log,\n 3 - turn clibration\nMode:'))
+mode = int(input('Input mode:\n 1 - modeling,\n 2 - reading from log,\n 3 - turn clibration\n 4 - Generate from conf\nMode:'))
 print()
-# np.random.seed(6447)
+np.random.seed(6447)
 imu0 = None
 raw_data = None
 
@@ -44,6 +44,10 @@ elif mode == 3:
     tM, tw0 = turn_calibration()
     imu0 = Imu(tM, tw0)
     save_imu_config(imu0, 'home_imu.conf')
+elif mode == 4:
+    imu0 = imu_from_config('home_imu.conf', 1000)
+    tM, tw0 = imu0.get_params()
+    raw_data = imu0.generate_rotation()
 else:
     print('Wrong code')
     exit()
@@ -57,7 +61,7 @@ print('\n\n')
 if calc_mode == 1:
     M, w0 = mnk(raw_data)
 elif calc_mode == 2:
-    M, w0 = nmnk(raw_data, 20)
+    M, w0 = nmnk(raw_data, 30)
 else:
     print('Wrong code')
     exit()
@@ -82,4 +86,4 @@ print()
 print(f'Mxy: {relative_error(M[0, 1], tM[0, 1]):.2f}%')
 print(f'Mxz: {relative_error(M[0, 2], tM[0, 2]):.2f}%')
 print(f'Myz: {relative_error(M[1, 2], tM[1, 2]):.2f}%')
-print(average_absolute_accel_diff(w1, w2))
+print(average_accel_diff(w1, w2))

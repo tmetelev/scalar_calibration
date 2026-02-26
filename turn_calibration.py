@@ -62,5 +62,5 @@ def turn_calibration():
     w0s = np.array([[wx0, wy0, wz0]]).T
     w0s /= 2
     M = np.linalg.inv(Ms)
-    w0 = M @ w0s
+    w0 = -M @ w0s
     return M, w0

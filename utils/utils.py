@@ -22,7 +22,7 @@ def save_imu_config(imu, f_name):
     print(' '.join(map(str, params)), file=f)
     f.close()
 
-def imu_from_config(f_name):
+def imu_from_config(f_name, noise=0):
     f = open(f_name)
     params = [float(x) for x in f.readline().split()]
     M = np.array([
@@ -31,4 +31,4 @@ def imu_from_config(f_name):
         [params[4], params[5], params[2]]
     ])
     w0 = np.array([[params[6], params[7], params[8]]]).T
-    return Imu(M, w0)
+    return Imu(M, w0, noise)

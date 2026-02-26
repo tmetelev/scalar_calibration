@@ -2,12 +2,12 @@
 # Metrics 
 
 
-def average_absolute_accel_diff(w1, w2):
+def average_accel_diff(w1, w2):
     n = len(w1)
     res = 0
     for i in range(n):
-        res += (w1[i].T @ w1[i] - w2[i].T @ w2[i]) ** 2
-    res /= n
+        res += abs(w1[i].T @ w1[i] - w2[i].T @ w2[i])
+    res /= (n * 9.81 * 9.81)
     return res
 
 def relative_error(x, x0):
