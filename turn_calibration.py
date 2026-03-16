@@ -55,8 +55,8 @@ def turn_calibration():
     wz0 = avg_raw[4][2] + avg_raw[5][2]
     Ms = np.array([
         [Mx, Mxy, Mxz],
-        [Mxy, My, Myz],
-        [Mxz, Mxy, Mz]
+        [-Mxy, My, Myz],
+        [-Mxz, -Myz, Mz]
     ])
     Ms /= 2 * 9.81
     w0s = np.array([[wx0, wy0, wz0]]).T

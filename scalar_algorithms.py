@@ -43,9 +43,9 @@ def mnk(r):
     M = np.linalg.cholesky(A).T
     
     w0 = np.linalg.solve(M.T, b)
-    M[1, 0] = M[0, 1]
-    M[2, 0] = M[0, 2]
-    M[2, 1] = M[1, 2]
+    M[1, 0] = -M[0, 1]
+    M[2, 0] = -M[0, 2]
+    M[2, 1] = -M[1, 2]
     imu = Imu(M, w0)
     scale_w = imu.raw_to_acc(r[0])
     k = np.sqrt((9.81 ** 2) / (scale_w.T @ scale_w))
@@ -65,8 +65,8 @@ def nmnk(r, iterations=10):
     for i in range(iterations):
         M = np.array([
                 [q[0, 0], q[3, 0], q[4, 0]],
-                [q[3, 0], q[1, 0], q[5, 0]],
-                [q[4, 0], q[5, 0], q[2, 0]]
+                [-q[3, 0], q[1, 0], q[5, 0]],
+                [-q[4, 0], -q[5, 0], q[2, 0]]
             ])
         w0 = np.array([[q[6, 0], q[7, 0], q[8, 0]]]).T
         for j in range(n):

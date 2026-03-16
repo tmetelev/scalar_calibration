@@ -27,8 +27,8 @@ def imu_from_config(f_name, noise=0):
     params = [float(x) for x in f.readline().split()]
     M = np.array([
         [params[0], params[3], params[4]],
-        [params[3], params[1], params[5]],
-        [params[4], params[5], params[2]]
+        [-params[3], params[1], params[5]],
+        [-params[4], -params[5], params[2]]
     ])
     w0 = np.array([[params[6], params[7], params[8]]]).T
     return Imu(M, w0, noise)

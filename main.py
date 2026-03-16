@@ -29,14 +29,14 @@ if mode == 1:
     tw0 = np.random.normal(0, w0_sig, size=(3, 1))
     tM = np.array([
         [tMx, tMxy, tMxz],
-        [tMxy, tMy, tMyz],
-        [tMxz, tMxy, tMz]
+        [-tMxy, tMy, tMyz],
+        [-tMxz, -tMyz, tMz]
     ])
 
-    imu0 = Imu(tM, tw0)
+    imu0 = Imu(tM, tw0, 300)
     raw_data = imu0.generate_rotation(4, 6)
 elif mode == 2:
-    raw_data = log_reader('logs/fast.log')
+    raw_data = log_reader('logs/test.log')
     imu0 = imu_from_config('home_imu.conf')
     tM, tw0 = imu0.get_params()
 elif mode == 3:
@@ -45,7 +45,7 @@ elif mode == 3:
     imu0 = Imu(tM, tw0)
     save_imu_config(imu0, 'home_imu.conf')
 elif mode == 4:
-    imu0 = imu_from_config('home_imu.conf', 1000)
+    imu0 = imu_from_config('home_imu.conf', 100)
     tM, tw0 = imu0.get_params()
     raw_data = imu0.generate_rotation()
 else:
@@ -61,7 +61,7 @@ print('\n\n')
 if calc_mode == 1:
     M, w0 = mnk(raw_data)
 elif calc_mode == 2:
-    M, w0 = nmnk(raw_data, 30)
+    M, w0 = nmnk(raw_data, 5)
 else:
     print('Wrong code')
     exit()
