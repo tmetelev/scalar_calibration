@@ -11,13 +11,13 @@ from utils.utils import *
 
 mode = int(input('Input mode:\n 1 - modeling,\n 2 - reading from log,\n 3 - turn clibration\n 4 - Generate from conf\nMode:'))
 print()
-np.random.seed(6447)
+np.random.seed(3)
 imu0 = None
 raw_data = None
 
 if mode == 1:
-    m_sig = 0.0005
-    w0_sig = 0.2
+    m_sig = 2500 #0.0005
+    w0_sig = 1000
     mxx_sig = 0.01 * m_sig
 
     tMx = abs(np.random.normal(0, m_sig))
@@ -33,8 +33,8 @@ if mode == 1:
         [-tMxz, -tMyz, tMz]
     ])
 
-    imu0 = Imu(tM, tw0, 300)
-    raw_data = imu0.generate_rotation(4, 6)
+    imu0 = Imu(tM, tw0, 0)
+    raw_data = imu0.generate_rotation(10, 100)
 elif mode == 2:
     raw_data = log_reader('logs/test.log')
     imu0 = imu_from_config('home_imu.conf')
@@ -56,17 +56,29 @@ else:
 
 
 # --- CALCULATION ---
-calc_mode = int(input("Calculation mode:\n 1 - MNK\n 2 - N_MNK\nMode:"))
+calc_mode = int(input("Calculation mode:\n 1 - MNK\n 2 - N_MNK\n 3 - Kalman\nMode:"))
 print('\n\n')
 if calc_mode == 1:
     M, w0 = mnk(raw_data)
 elif calc_mode == 2:
-    M, w0 = nmnk(raw_data, 5)
+    M, w0 = nmnk(raw_data, 100)
+elif calc_mode == 3:
+    if mode == 1:
+        sig_x = m_sig ** 2
+        sig_xx = mxx_sig ** 2
+        sig_w0 = w0_sig ** 2
+    else:
+        sig_x = 1e-4 ** 2
+        sig_xx = 1e-7 ** 2
+        sig_w0 = 1 ** 2
+    M, w0 = kalman(raw_data, np.array([[800 ** 2]]), np.diag([sig_x, sig_x, sig_x, sig_xx, sig_xx, sig_xx,
+                                            sig_w0, sig_w0, sig_w0]))
 else:
     print('Wrong code')
     exit()
 
 imu1 = Imu(M, w0)
+imu0 = Imu(tM, tw0)
 # --- CHECK ---
 w1 = []
 w2 = []
@@ -87,3 +99,4 @@ print(f'Mxy: {relative_error(M[0, 1], tM[0, 1]):.2f}%')
 print(f'Mxz: {relative_error(M[0, 2], tM[0, 2]):.2f}%')
 print(f'Myz: {relative_error(M[1, 2], tM[1, 2]):.2f}%')
 print(average_accel_diff(w1, w2))
+print(avg_criteria(w2))

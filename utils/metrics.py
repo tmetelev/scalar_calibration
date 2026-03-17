@@ -12,3 +12,11 @@ def average_accel_diff(w1, w2):
 
 def relative_error(x, x0):
     return abs((x - x0) / x0) * 100
+
+def avg_criteria(w):
+    n = len(w)
+    res = 0
+    for i in range(n):
+        res += w[i].T @ w[i] - 9.81 * 9.81
+    res /= (n)
+    return res

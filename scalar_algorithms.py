@@ -54,6 +54,16 @@ def mnk(r):
     return M, w0
 
 
+def q_to_M(q):
+    M = np.array([
+                [q[0, 0], q[3, 0], q[4, 0]],
+                [-q[3, 0], q[1, 0], q[5, 0]],
+                [-q[4, 0], -q[5, 0], q[2, 0]]
+            ])
+    w0 = np.array([[q[6, 0], q[7, 0], q[8, 0]]]).T
+    return M, w0
+
+
 def nmnk(r, iterations=10):
     n = len(r)
     q = np.array([[1, 1, 1, 0, 0, 0, 0, 0, 0]]).T
@@ -63,12 +73,7 @@ def nmnk(r, iterations=10):
     M = np.zeros((3, 3))
     w0 = np.zeros((3, 1))
     for i in range(iterations):
-        M = np.array([
-                [q[0, 0], q[3, 0], q[4, 0]],
-                [-q[3, 0], q[1, 0], q[5, 0]],
-                [-q[4, 0], -q[5, 0], q[2, 0]]
-            ])
-        w0 = np.array([[q[6, 0], q[7, 0], q[8, 0]]]).T
+        M, w0 = q_to_M(q)
         for j in range(n):
             rx = r[j][0, 0]
             ry = r[j][1, 0]
@@ -76,9 +81,36 @@ def nmnk(r, iterations=10):
             pW = M @ r[j] + w0 
             W2[j, 0] = pW.T @ pW
             H[j] = 2 * np.array([pW[0, 0] * rx, pW[1, 0] * ry, pW[2, 0] * rz,
-                                  pW[0, 0] * ry + pW[1, 0] * rx, pW[0, 0] * rz + pW[2, 0] * rx, pW[2, 0] * ry + pW[1, 0] * rz,
+                                  pW[0, 0] * ry - pW[1, 0] * rx, pW[0, 0] * rz - pW[2, 0] * rx, -pW[2, 0] * ry + pW[1, 0] * rz,
                                     pW[0, 0], pW[1, 0], pW[2, 0]])
         dq = np.linalg.pinv(H) @ (G2 - W2)
         q = q + dq
     return M, w0
 
+
+def kalman(raw, R, P0):
+    q = np.array([[1, 1, 1, 0, 0, 0, 0, 0, 0]]).T
+    F = np.diag([1] * 9)
+    P = P0
+    G = 9.81 * 9.81
+    
+    for r in raw:
+        q_pred = F @ q
+        P_pred = F @ P @ F.T
+
+        M, w0 = q_to_M(q)
+
+        rx = r[0, 0]
+        ry = r[1, 0]
+        rz = r[2, 0]
+        pW = M @ r + w0 
+        Y = pW.T @ pW
+        H = 2 * np.array([[pW[0, 0] * rx, pW[1, 0] * ry, pW[2, 0] * rz,
+                                  pW[0, 0] * ry - pW[1, 0] * rx, pW[0, 0] * rz - pW[2, 0] * rx, -pW[2, 0] * ry + pW[1, 0] * rz,
+                                    pW[0, 0], pW[1, 0], pW[2, 0]]])
+        
+        P = np.linalg.inv(np.linalg.inv(P_pred) + H.T @ np.linalg.inv(R) @ H)
+        K = P @ H.T @ np.linalg.inv(R)
+        q = q_pred + K @ (G - Y)
+    M, w0 = q_to_M(q)
+    return M, w0
