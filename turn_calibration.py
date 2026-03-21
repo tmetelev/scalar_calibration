@@ -3,6 +3,8 @@
 
 
 import numpy as np
+from utils.model import Imu
+from utils.utils import save_imu_config
 import serial
 import time
 
@@ -64,3 +66,7 @@ def turn_calibration():
     M = np.linalg.inv(Ms)
     w0 = -M @ w0s
     return M, w0
+
+tM, tw0 = turn_calibration()
+imu0 = Imu(tM, tw0)
+save_imu_config(imu0, 'home_imu.conf')

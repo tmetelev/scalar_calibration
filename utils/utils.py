@@ -32,3 +32,12 @@ def imu_from_config(f_name, noise=0):
     ])
     w0 = np.array([[params[6], params[7], params[8]]]).T
     return Imu(M, w0, noise)
+
+def coefs_to_invert(M, F, r0):
+    return np.linalg.inv(F) @ np.linalg.inv(M), -np.linalg.inv(F) @ np.linalg.inv(M) @ r0
+
+def invert_to_coefs(iM, w0):
+    M = np.diag([iM[0, 0], iM[1, 1], iM[2, 2]])
+    F = np.linalg.inv(iM) @ np.linalg.inv(M)
+    r0 = -M @ F @ w0
+    return M, F, r0

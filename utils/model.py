@@ -3,15 +3,18 @@
 
 
 import numpy as np
+from utils.utils import *
 
 
 G = 9.81
 
 
 class Imu():
-    def __init__(self, M, w0, noise=0):
-        self.__M = M
-        self.__w0 = w0
+    def __init__(self, params=[1] * 3 + [0] * 9, noise=0):
+        self.M = None
+        self.F = None
+        self.r0 = None
+        self.update(params)
         self.__noise = noise
 
     def generate_rotation(self, v_points=5, h_points=9):
@@ -25,22 +28,22 @@ class Imu():
                 res.append(r)
         return res
     
-    def generate_sector_rotation(self, v_points=5, h_points=9):
-        res = []
-        for phi in np.linspace(0, np.pi, h_points):
-            for psi in np.linspace(-np.pi / 2, 0, v_points):
-                w = np.array([[G * np.cos(psi) * np.cos(phi)], [G * np.sin(psi)], [G * np.cos(psi) * np.sin(phi)]])
-                r = self.acc_to_raw(w)
-                if self.__noise != 0:
-                    r += np.random.normal(0, self.__noise, size=(3, 1))
-                res.append(r)
-        return res
-    
     def acc_to_raw(self, w):
-        return np.linalg.inv(self.__M) @ (w - self.__w0)
+        return self.M @ self.F @ w + self.w0
     
     def raw_to_acc(self, r):
-        return self.__M @ r + self.__w0
+        return self.__iM @ r + self.__w0
     
-    def get_params(self):
-        return self.__M, self.__w0
+    def update(self, params):
+        self.M = np.diag([params[0], params[1], params[2]])
+        self.F = np.array([
+            [1, params[3], params[4]],
+            [params[5], 1, params[6]],
+            [params[7], params[8], 1]
+        ])
+        self.r0 = np.array([[params[9], params[10], params[11]]]).T
+        self.__iM, self.__w0 = coefs_to_invert(self.M, self.F, self.r0)
+    
+    def calibrate(self, func, raw_data):
+        params = func(raw_data)
+        self.update(params)
