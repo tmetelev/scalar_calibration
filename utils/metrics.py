@@ -17,6 +17,6 @@ def avg_criteria(w):
     n = len(w)
     res = 0
     for i in range(n):
-        res += w[i].T @ w[i] - 9.81 * 9.81
+        res += abs(w[i].T @ w[i] - 9.81 * 9.81)
     res /= (n)
-    return res
+    return res.tolist()[0][0]

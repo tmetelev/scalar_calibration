@@ -4,6 +4,7 @@
 
 import numpy as np
 from utils.model import Imu
+from utils.utils import coefs_to_invert, invert_to_coefs
 
 
 def mnk(r):
@@ -64,34 +65,38 @@ def q_to_M(q):
     return M, w0
 
 
-def nmnk(r, iterations=10):
+def nmnk(r, params):
+    iterations = params[0]
+
     n = len(r)
-    q = np.array([[1, 1, 1, 0, 0, 0, 0, 0, 0]]).T
+    q = np.array([[1, 1, 1] + [0] * 9]).T
     G2 = np.ones((n, 1)) * 9.81 * 9.81
-    H = np.zeros((n, 9))
+    H = np.zeros((n, 12))
     W2 = np.zeros((n, 1))
-    M = np.zeros((3, 3))
-    w0 = np.zeros((3, 1))
+    imu = Imu()
     for i in range(iterations):
-        M, w0 = q_to_M(q)
+        imu.update_inv(q.T.tolist()[0])
         for j in range(n):
             rx = r[j][0, 0]
             ry = r[j][1, 0]
             rz = r[j][2, 0]
-            pW = M @ r[j] + w0 
+            pW = imu.raw_to_acc(r[j])
             W2[j, 0] = pW.T @ pW
             H[j] = 2 * np.array([pW[0, 0] * rx, pW[1, 0] * ry, pW[2, 0] * rz,
-                                  pW[0, 0] * ry - pW[1, 0] * rx, pW[0, 0] * rz - pW[2, 0] * rx, -pW[2, 0] * ry + pW[1, 0] * rz,
-                                    pW[0, 0], pW[1, 0], pW[2, 0]])
+                                 pW[0, 0] * ry, pW[0, 0] * rz,
+                                 pW[1, 0] * rx, pW[1, 0] * rz,
+                                 pW[2, 0] * rx, pW[2, 0] * ry,
+                                 pW[0, 0], pW[1, 0], pW[2, 0]])
         dq = np.linalg.pinv(H) @ (G2 - W2)
         q = q + dq
-    return M, w0
+    return q.T.tolist()[0]
 
 
 def kalman(raw, R, P0):
     q = np.array([[1, 1, 1, 0, 0, 0, 0, 0, 0]]).T
     F = np.diag([1] * 9)
-    P = P0
+    R = np.array([[200]])
+    P = np.diag([])
     G = 9.81 * 9.81
     
     for r in raw:

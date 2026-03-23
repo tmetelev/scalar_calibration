@@ -3,7 +3,7 @@
 
 
 import numpy as np
-from utils.utils import *
+from utils.utils import coefs_to_invert, invert_to_coefs
 
 
 G = 9.81
@@ -29,7 +29,7 @@ class Imu():
         return res
     
     def acc_to_raw(self, w):
-        return self.M @ self.F @ w + self.w0
+        return self.M @ self.F @ w + self.r0
     
     def raw_to_acc(self, r):
         return self.__iM @ r + self.__w0
@@ -43,7 +43,16 @@ class Imu():
         ])
         self.r0 = np.array([[params[9], params[10], params[11]]]).T
         self.__iM, self.__w0 = coefs_to_invert(self.M, self.F, self.r0)
+
+    def update_inv(self, params):
+        self.__iM = np.array([
+            [params[0], params[3], params[4]],
+            [params[5], params[1], params[6]],
+            [params[7], params[8], params[2]]
+        ])
+        self.__w0 = np.array([[params[9], params[10], params[11]]]).T
+        self.M, self.F, self.r0 = invert_to_coefs(self.__iM, self.__w0)
     
-    def calibrate(self, func, raw_data):
-        params = func(raw_data)
-        self.update(params)
+    def calibrate(self, func, raw_data, func_params):
+        params = func(raw_data, func_params)
+        self.update_inv(params)

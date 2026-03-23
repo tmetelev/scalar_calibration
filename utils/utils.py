@@ -3,7 +3,7 @@
 
 
 import numpy as np
-from utils.model import Imu
+# from utils.model import Imu
 
 
 def log_reader(f_name):
@@ -22,22 +22,23 @@ def save_imu_config(imu, f_name):
     print(' '.join(map(str, params)), file=f)
     f.close()
 
-def imu_from_config(f_name, noise=0):
-    f = open(f_name)
-    params = [float(x) for x in f.readline().split()]
-    M = np.array([
-        [params[0], params[3], params[4]],
-        [-params[3], params[1], params[5]],
-        [-params[4], -params[5], params[2]]
-    ])
-    w0 = np.array([[params[6], params[7], params[8]]]).T
-    return Imu(M, w0, noise)
+# def imu_from_config(f_name, noise=0):
+#     f = open(f_name)
+#     params = [float(x) for x in f.readline().split()]
+#     M = np.array([
+#         [params[0], params[3], params[4]],
+#         [-params[3], params[1], params[5]],
+#         [-params[4], -params[5], params[2]]
+#     ])
+#     w0 = np.array([[params[6], params[7], params[8]]]).T
+#     return Imu(M, w0, noise)
 
 def coefs_to_invert(M, F, r0):
-    return np.linalg.inv(F) @ np.linalg.inv(M), -np.linalg.inv(F) @ np.linalg.inv(M) @ r0
+    return np.linalg.inv(M @ F), -np.linalg.inv(M @ F) @ r0
 
 def invert_to_coefs(iM, w0):
-    M = np.diag([iM[0, 0], iM[1, 1], iM[2, 2]])
-    F = np.linalg.inv(iM) @ np.linalg.inv(M)
+    MF = np.linalg.inv(iM)
+    M = np.diag([MF[0, 0], MF[1, 1], MF[2, 2]])
+    F = np.linalg.inv(M) @ MF
     r0 = -M @ F @ w0
     return M, F, r0
