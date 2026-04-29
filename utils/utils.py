@@ -42,3 +42,8 @@ def invert_to_coefs(iM, w0):
     F = np.linalg.inv(M) @ MF
     r0 = -M @ F @ w0
     return M, F, r0
+
+def matrices_to_list(M, F, r0):
+    return [M[0,0], M[1, 1], M[2, 2],
+            F[0, 1], F[0, 2], F[1, 0], F[1, 2], F[2, 0], F[2, 1],
+            r0[0, 0], r0[1, 0], r0[2, 0]]

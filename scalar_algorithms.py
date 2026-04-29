@@ -3,8 +3,10 @@
 
 
 import numpy as np
+import matplotlib.pyplot as plt
 from utils.model import Imu
-from utils.utils import coefs_to_invert, invert_to_coefs
+from utils.utils import coefs_to_invert, invert_to_coefs, matrices_to_list
+from utils.metrics import avg_criteria
 
 
 def mnk(r):
@@ -88,7 +90,81 @@ def nmnk(r, params):
                                  pW[2, 0] * rx, pW[2, 0] * ry,
                                  pW[0, 0], pW[1, 0], pW[2, 0]])
         dq = np.linalg.pinv(H) @ (G2 - W2)
+        # print(dq.tolist())
+        # print()
         q = q + dq
+    return q.T.tolist()[0]
+
+
+def nmnk_draw(r, params):
+    iterations = params[0]
+    imu0 = params[2]
+    param_num = params[1]
+
+    # drawing J line
+
+    q0 = matrices_to_list(imu0.M, imu0.F, imu0.r0)
+    # print(q0)
+    imu1 = Imu(q0)
+    if param_num == 0:
+        avg = imu0.M[0, 0]
+        edge = 10000
+    elif param_num == 9:
+        avg = imu0.r0[0, 0]
+        edge = 1000
+    elif param_num == 3:
+        avg = imu0.F[0, 1]
+        edge = 2
+    y = []
+    print(avg)
+    x = np.linspace(avg - edge, avg + edge, 1000)
+    for n in x:
+        q0[param_num] = n
+        imu1.update(q0)
+        y.append(avg_criteria(imu1.raw_to_acc(r)))
+    plt.plot(x, y)
+    plt.axvline(avg, color='red', linewidth=0.5)
+    plt.yscale('log')
+    plt.xlim(avg - edge * 0.1, avg + edge * 0.1)
+    plt.xlabel("param")
+    plt.ylabel('J')
+    plt.grid()
+
+
+    n = len(r)
+    q = np.array([[1, 1, 1] + [0] * 9]).T
+    G2 = np.ones((n, 1)) * 9.81 * 9.81
+    H = np.zeros((n, 12))
+    W2 = np.zeros((n, 1))
+    imu = Imu()
+    for i in range(iterations):
+        imu.update_inv(q.T.tolist()[0])
+
+        # drawing cuurent J
+
+        p = matrices_to_list(imu.M, imu.F, imu.r0)
+        q0[param_num] = p[param_num]
+        imu1.update(q0)
+        j = avg_criteria(imu1.raw_to_acc(r))
+        plt.plot(p[param_num], j, marker='o', color='red')
+        plt.text(p[param_num], j, i)
+
+        for j in range(n):
+            rx = r[j][0, 0]
+            ry = r[j][1, 0]
+            rz = r[j][2, 0]
+            pW = imu.raw_to_acc(r[j])
+            W2[j, 0] = pW.T @ pW
+            H[j] = 2 * np.array([pW[0, 0] * rx, pW[1, 0] * ry, pW[2, 0] * rz,
+                                 pW[0, 0] * ry, pW[0, 0] * rz,
+                                 pW[1, 0] * rx, pW[1, 0] * rz,
+                                 pW[2, 0] * rx, pW[2, 0] * ry,
+                                 pW[0, 0], pW[1, 0], pW[2, 0]])
+        dq = np.linalg.pinv(H) @ (G2 - W2)
+        # print(dq.tolist())
+        # print()
+        q = q + dq
+    plt.show()
     return q.T.tolist()[0]
 
 

@@ -3,6 +3,7 @@
 
 
 import numpy as np
+import matplotlib.pyplot as plt
 from scalar_algorithms import *
 from turn_calibration import turn_calibration
 from utils.model import Imu
@@ -16,12 +17,12 @@ def testing(mode, calc_mode, debug=False, log_name=None, conf_name=None,
     raw_data = None
 
     if mode == 1:
-        m_sig = modeling_params[0]
+        m_avg = modeling_params[0]
         w0_sig = modeling_params[2]
         phi_sig = modeling_params[1]
         noise = modeling_params[3]
         
-        tM = np.abs(np.random.normal(0, m_sig, size=(3, 1)))
+        tM = np.abs(np.random.normal(m_avg, 0.2 * m_avg, size=(3, 1)))
         tphi = np.random.normal(0, phi_sig, size=(6, 1))
         tw0 = np.random.normal(0, w0_sig, size=(3, 1))
         params = [tM[0, 0], tM[1, 0], tM[2, 0], tphi[0, 0], tphi[1, 0], tphi[2, 0], tphi[3, 0], tphi[4, 0], tphi[5, 0],
@@ -35,9 +36,11 @@ def testing(mode, calc_mode, debug=False, log_name=None, conf_name=None,
     else:
         print('wrong mode')
         return
-    
+        
     imu1 = Imu()
-    calibration_func = [nmnk]
+    calibration_func = [nmnk, nmnk_draw]
+    if calc_mode == 2:
+        func_params.append(imu0)
     imu1.calibrate(calibration_func[calc_mode - 1], raw_data, func_params)
 
     
@@ -45,6 +48,8 @@ def testing(mode, calc_mode, debug=False, log_name=None, conf_name=None,
     tw0 = imu0.r0
     M = imu1.M
     w0 = imu1.r0
+    tF = imu0.F
+    F = imu1.F
     w1 = []
     w2 = []
     for r in raw_data:
@@ -55,6 +60,23 @@ def testing(mode, calc_mode, debug=False, log_name=None, conf_name=None,
     for i in range(3):
         rel_err[i] = relative_error(M[i, i], tM[i, i])
         rel_err[i + 9] = relative_error(w0[i, 0], tw0[i, 0])
+    rel_err[3] = relative_error(F[0, 2], tF[0, 2])
+    rel_err[4] = relative_error(F[1, 0], tF[1, 0])
+    rel_err[5] = relative_error(F[0, 1], tF[0, 1])
+    rel_err[6] = relative_error(F[1, 2], tF[1, 2])
+    rel_err[7] = relative_error(F[2, 0], tF[2, 0])
+    rel_err[8] = relative_error(F[2, 1], tF[2, 1])
+
+    abs_err = [0] * 12
+    for i in range(3):
+        abs_err[i] = absolute_error(M[i, i], tM[i, i])
+        abs_err[i + 9] = absolute_error(w0[i, 0], tw0[i, 0])
+    abs_err[3] = absolute_error(F[0, 2], tF[0, 2])
+    abs_err[4] = absolute_error(F[1, 0], tF[1, 0])
+    abs_err[5] = absolute_error(F[0, 1], tF[0, 1])
+    abs_err[6] = absolute_error(F[1, 2], tF[1, 2])
+    abs_err[7] = absolute_error(F[2, 0], tF[2, 0])
+    abs_err[8] = absolute_error(F[2, 1], tF[2, 1])    
     
     if debug:
         print('--- Результат калибровки ---')
@@ -77,4 +99,4 @@ def testing(mode, calc_mode, debug=False, log_name=None, conf_name=None,
         print(average_accel_diff(w1, w2))
         print(avg_criteria(w2))
 
-    return avg_criteria(w2), rel_err
+    return avg_criteria(w2), rel_err, abs_err
