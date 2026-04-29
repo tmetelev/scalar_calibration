@@ -21,6 +21,9 @@ def testing(mode, calc_mode, debug=False, log_name=None, conf_name=None,
         w0_sig = modeling_params[2]
         phi_sig = modeling_params[1]
         noise = modeling_params[3]
+        pos_count = 1
+        if noise != 0:
+            pos_count = 5    
         
         tM = np.abs(np.random.normal(m_avg, 0.2 * m_avg, size=(3, 1)))
         tphi = np.random.normal(0, phi_sig, size=(6, 1))
@@ -29,7 +32,8 @@ def testing(mode, calc_mode, debug=False, log_name=None, conf_name=None,
                   tw0[0, 0], tw0[1, 0], tw0[2, 0]]
         # print(params)
         imu0 = Imu(params, noise)
-        raw_data = imu0.generate_rotation()
+        # raw_data = imu0.generate_rotation()
+        raw_data = imu0.generate_rotation_dodec(pos_count)
     elif mode == 2:
         # imu0 = imu_from_config(conf_name)
         raw_data = log_reader(log_name)

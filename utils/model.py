@@ -3,7 +3,7 @@
 
 
 import numpy as np
-from utils.utils import coefs_to_invert, invert_to_coefs
+from utils.utils import coefs_to_invert, invert_to_coefs, get_dodecaedr
 
 
 G = 9.81
@@ -17,10 +17,22 @@ class Imu():
         self.update(params)
         self.__noise = noise
 
-    def generate_rotation(self, v_points=5, h_points=9):
+    def generate_rotation(self, v_points=20, h_points=50):
         res = []
         for phi in np.linspace(-np.pi, np.pi, h_points):
             for psi in np.linspace(-np.pi / 2, np.pi / 2, v_points):
+                w = np.array([[G * np.cos(psi) * np.cos(phi)], [G * np.sin(psi)], [G * np.cos(psi) * np.sin(phi)]])
+                r = self.acc_to_raw(w)
+                if self.__noise != 0:
+                    r += np.random.normal(0, self.__noise, size=(3, 1))
+                res.append(r)
+        return res
+    
+    def generate_rotation_dodec(self, nums=1):
+        res = []
+        angles = get_dodecaedr()
+        for (psi, phi) in angles:
+            for n in range(nums):
                 w = np.array([[G * np.cos(psi) * np.cos(phi)], [G * np.sin(psi)], [G * np.cos(psi) * np.sin(phi)]])
                 r = self.acc_to_raw(w)
                 if self.__noise != 0:
