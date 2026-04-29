@@ -3,9 +3,7 @@
 
 
 import numpy as np
-import matplotlib.pyplot as plt
 from scalar_algorithms import *
-from turn_calibration import turn_calibration
 from utils.model import Imu
 from utils.metrics import *
 from utils.utils import *
@@ -28,14 +26,16 @@ def testing(mode, calc_mode, debug=False, log_name=None, conf_name=None,
         tM = np.abs(np.random.normal(m_avg, 0.2 * m_avg, size=(3, 1)))
         tphi = np.random.normal(0, phi_sig, size=(6, 1))
         tw0 = np.random.normal(0, w0_sig, size=(3, 1))
-        params = [tM[0, 0], tM[1, 0], tM[2, 0], tphi[0, 0], tphi[1, 0], tphi[2, 0], tphi[3, 0], tphi[4, 0], tphi[5, 0],
-                  tw0[0, 0], tw0[1, 0], tw0[2, 0]]
+        # params = [tM[0, 0], tM[1, 0], tM[2, 0], tphi[0, 0], tphi[1, 0], tphi[2, 0], tphi[3, 0], tphi[4, 0], tphi[5, 0],
+        #           tw0[0, 0], tw0[1, 0], tw0[2, 0]]
+        params = imu_from_config(conf_name)
         # print(params)
         imu0 = Imu(params, noise)
         # raw_data = imu0.generate_rotation()
         raw_data = imu0.generate_rotation_dodec(pos_count)
     elif mode == 2:
-        # imu0 = imu_from_config(conf_name)
+        params = imu_from_config(conf_name)
+        imu0 = Imu(params)
         raw_data = log_reader(log_name)
     else:
         print('wrong mode')

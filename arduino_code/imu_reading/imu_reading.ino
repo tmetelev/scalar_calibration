@@ -2,8 +2,8 @@
 
 // Gyro
 const int MPU = 0x68;
-#define N 1000
-#define T 10
+#define N 500
+#define T 0
 
 
 void sendAcc() {
