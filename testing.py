@@ -9,7 +9,7 @@ from utils.metrics import *
 from utils.utils import *
 
 
-def testing(mode, calc_mode, debug=False, log_name=None, conf_name=None,
+def testing(mode, calc_mode, debug=False, log_name='', conf_name='',
              modeling_params=None, func_params=None):
     imu0 = None
     raw_data = None
@@ -26,9 +26,8 @@ def testing(mode, calc_mode, debug=False, log_name=None, conf_name=None,
         tM = np.abs(np.random.normal(m_avg, 0.2 * m_avg, size=(3, 1)))
         tphi = np.random.normal(0, phi_sig, size=(6, 1))
         tw0 = np.random.normal(0, w0_sig, size=(3, 1))
-        # params = [tM[0, 0], tM[1, 0], tM[2, 0], tphi[0, 0], tphi[1, 0], tphi[2, 0], tphi[3, 0], tphi[4, 0], tphi[5, 0],
-        #           tw0[0, 0], tw0[1, 0], tw0[2, 0]]
-        params = imu_from_config(conf_name)
+        params = [tM[0, 0], tM[1, 0], tM[2, 0], tphi[0, 0], tphi[1, 0], tphi[2, 0], tphi[3, 0], tphi[4, 0], tphi[5, 0],
+                  tw0[0, 0], tw0[1, 0], tw0[2, 0]]
         # print(params)
         imu0 = Imu(params, noise)
         # raw_data = imu0.generate_rotation()
