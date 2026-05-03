@@ -9,6 +9,9 @@ from utils.metrics import *
 from utils.utils import *
 
 
+# np.random.seed(45)
+
+
 def testing(mode, calc_mode, debug=False, log_name='', conf_name='',
              modeling_params=None, func_params=None):
     imu0 = None
@@ -21,11 +24,11 @@ def testing(mode, calc_mode, debug=False, log_name='', conf_name='',
         noise = modeling_params[3]
         pos_count = 1
         if noise != 0:
-            pos_count = 5    
+            pos_count = 5  
         
         tM = np.abs(np.random.normal(m_avg, 0.2 * m_avg, size=(3, 1)))
         tphi = np.random.normal(0, phi_sig, size=(6, 1))
-        tw0 = np.random.normal(0, w0_sig, size=(3, 1))
+        tw0 = np.random.normal(w0_sig, w0_sig * 0.7, size=(3, 1))
         params = [tM[0, 0], tM[1, 0], tM[2, 0], tphi[0, 0], tphi[1, 0], tphi[2, 0], tphi[3, 0], tphi[4, 0], tphi[5, 0],
                   tw0[0, 0], tw0[1, 0], tw0[2, 0]]
         # print(params)
@@ -44,7 +47,8 @@ def testing(mode, calc_mode, debug=False, log_name='', conf_name='',
     calibration_func = [nmnk, nmnk_draw]
     if calc_mode == 2:
         func_params.append(imu0)
-    imu1.calibrate(calibration_func[calc_mode - 1], raw_data, func_params)
+    new_param, R_M, R_r0 = calibration_func[calc_mode - 1](raw_data, func_params)
+    imu1.update_inv(new_param)
 
     
     tM = imu0.M
@@ -83,13 +87,18 @@ def testing(mode, calc_mode, debug=False, log_name='', conf_name='',
     
     if debug:
         print('--- Результат калибровки ---')
+
+        print('R_M:')
+        print(3 * np.sqrt(R_M))
+        print('R_r0')
+        print(3 * np.sqrt(R_r0))
         print('По осям:')
         axis = ['x', 'y', 'z']
         for i in range(3):
             print()
             print(f'Ось {axis[i]}')
-            print(f'M true: {tM[i, i]:.5f}    {M[i, i]:.5f}    {relative_error(M[i, i], tM[i, i]):.2f}%')
-            print(f'r0 true: {tw0[i, 0]:.2f}    {w0[i, 0]:.2f}    {relative_error(w0[i, 0], tw0[i, 0]):.2f}%')
+            print(f'M true: {tM[i, i]:.5f}    {M[i, i]:.5f}    {relative_error(M[i, i], tM[i, i]):.2f}%    {absolute_error(M[i, i], tM[i, i]):.2f}')
+            print(f'r0 true: {tw0[i, 0]:.2f}    {w0[i, 0]:.2f}    {relative_error(w0[i, 0], tw0[i, 0]):.2f}%     {absolute_error(w0[i, 0], tw0[i, 0]):.2f}')
         print()
         tM = imu0.F
         M = imu1.F

@@ -69,6 +69,7 @@ def q_to_M(q):
 
 def nmnk(r, params):
     iterations = params[0]
+    noise = params[1]
 
     n = len(r)
     q = np.array([[1, 1, 1] + [0] * 9]).T
@@ -76,8 +77,22 @@ def nmnk(r, params):
     H = np.zeros((n, 12))
     W2 = np.zeros((n, 1))
     imu = Imu()
+
+    # accuracy
+    P_B = np.zeros((12, 12))
+    R_r = np.diag([noise ** 2] * 3)
+    K = np.zeros((3, 3))
+
     for i in range(iterations):
         imu.update_inv(q.T.tolist()[0])
+        # accuracy
+        R_K = P_B[:9, :9]
+        R_K = np.array([R_K[0], R_K[3], R_K[4], R_K[5], R_K[1], R_K[6], R_K[7], R_K[8], R_K[2]])
+        R_W0 = P_B[9:, 9:]
+        K = imu.K
+        W0 = imu.W0
+        R_nW = np.zeros((n, n))
+
         for j in range(n):
             rx = r[j][0, 0]
             ry = r[j][1, 0]
@@ -89,11 +104,29 @@ def nmnk(r, params):
                                  pW[1, 0] * rx, pW[1, 0] * rz,
                                  pW[2, 0] * rx, pW[2, 0] * ry,
                                  pW[0, 0], pW[1, 0], pW[2, 0]])
+            # accuracy
+            E3 = np.diag([1] * 3)
+            R_W = K @ R_r @ K.T
+            # R_W = K @ R_r @ K.T + np.kron(r[j].T, E3) @ R_K @ np.kron(r[j], E3) + R_W0
+            R_nW[j, j] = np.sqrt(R_W[0, 0] ** 2 + R_W[1, 1] ** 2 + R_W[2, 2] ** 2)
         dq = np.linalg.pinv(H) @ (G2 - W2)
         # print(dq.tolist())
         # print()
         q = q + dq
-    return q.T.tolist()[0]
+
+        # accuracy
+        P_B = np.linalg.pinv(H) @ R_nW @ np.linalg.pinv(H).T
+    
+    imu.update_inv(q.T.tolist()[0])
+    K = imu.K
+    W0 = imu.W0
+    M = imu.M
+    F = imu.F
+    R_W0 = P_B[9:, 9:]
+    R_M = np.diag([P_B[0, 0] / (K[0,0] ** 4), P_B[1, 1] / (K[1,1] ** 4), P_B[2, 2] / (K[2,2] ** 4)])
+    FW = F @ W0
+    R_r0 = M @ F @ R_W0 @ F.T @ M + np.diag([FW[0, 0] ** 2 * R_M[0, 0], FW[1, 0] ** 2 * R_M[1, 1], FW[2, 0] ** 2 * R_M[2, 2]])
+    return q.T.tolist()[0], R_M, R_r0
 
 
 def nmnk_draw(r, params):
