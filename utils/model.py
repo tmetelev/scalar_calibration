@@ -23,7 +23,7 @@ class Imu():
         res = []
         for phi in np.linspace(-np.pi, np.pi, h_points):
             for psi in np.linspace(-np.pi / 2, np.pi / 2, v_points):
-                w = np.array([[G * np.cos(psi) * np.cos(phi)], [G * np.cos(psi) * np.sin(phi)], [G * np.sin(psi)]])
+                w = np.array([[G * np.cos(psi) * np.cos(phi)], [G * np.cos(psi) * np.sin(phi)], [G * np.sin(psi)]], dtype=np.double)
                 r = self.acc_to_raw(w)
                 if self.__noise != 0:
                     r += np.random.normal(0, self.__noise, size=(3, 1))
@@ -33,11 +33,12 @@ class Imu():
     def generate_rotation_dodec(self, nums=1):
         res = []
         angles = get_dodecaedr()
+        angles += [(0, 0), (np.pi, 0), (np.pi / 2, 0), (np.pi / 2, np.pi), (np.pi / 2, np.pi / 2), (np.pi / 2, 3 * np.pi / 2)]
         for (psi, phi) in angles:
             psi -= np.pi / 2
             phi -= np.pi
             for n in range(nums):
-                w = np.array([[G * np.cos(psi) * np.cos(phi)], [G * np.cos(psi) * np.sin(phi)], [G * np.sin(psi)]])
+                w = np.array([[G * np.cos(psi) * np.cos(phi)], [G * np.cos(psi) * np.sin(phi)], [G * np.sin(psi)]], dtype=np.double)
                 r = self.acc_to_raw(w)
                 if self.__noise != 0:
                     r += np.random.normal(0, self.__noise, size=(3, 1))
@@ -56,8 +57,8 @@ class Imu():
             [1, params[3], params[4]],
             [params[5], 1, params[6]],
             [params[7], params[8], 1]
-        ])
-        self.r0 = np.array([[params[9], params[10], params[11]]]).T
+        ], dtype=np.double)
+        self.r0 = np.array([[params[9], params[10], params[11]]], dtype=np.double).T
         self.K, self.W0 = coefs_to_invert(self.M, self.F, self.r0)
 
     def update_inv(self, params):
@@ -65,8 +66,8 @@ class Imu():
             [params[0], params[3], params[4]],
             [params[5], params[1], params[6]],
             [params[7], params[8], params[2]]
-        ])
-        self.W0 = np.array([[params[9], params[10], params[11]]]).T
+        ], dtype=np.double)
+        self.W0 = np.array([[params[9], params[10], params[11]]], dtype=np.double).T
         self.M, self.F, self.r0 = invert_to_coefs(self.K, self.W0)
     
     def calibrate(self, func, raw_data, func_params):

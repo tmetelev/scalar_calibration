@@ -9,7 +9,7 @@ from utils.metrics import *
 from utils.utils import *
 
 
-# np.random.seed(45)
+# np.random.seed(35)
 
 
 def testing(mode, calc_mode, debug=False, log_name='', conf_name='',
@@ -26,14 +26,14 @@ def testing(mode, calc_mode, debug=False, log_name='', conf_name='',
         if noise != 0:
             pos_count = 5  
         
-        tM = np.abs(np.random.normal(m_avg, 0.2 * m_avg, size=(3, 1)))
+        tM = np.abs(np.random.normal(m_avg, 0.2 * m_avg, size=(3, 1)),)
         tphi = np.random.normal(0, phi_sig, size=(6, 1))
-        tw0 = np.random.normal(w0_sig, w0_sig * 0.7, size=(3, 1))
+        tw0 = np.random.normal(0, w0_sig, size=(3, 1))
         params = [tM[0, 0], tM[1, 0], tM[2, 0], tphi[0, 0], tphi[1, 0], tphi[2, 0], tphi[3, 0], tphi[4, 0], tphi[5, 0],
                   tw0[0, 0], tw0[1, 0], tw0[2, 0]]
         # print(params)
         imu0 = Imu(params, noise)
-        # raw_data = imu0.generate_rotation()
+        # raw_data = imu0.generate_rotation(20, 50)
         raw_data = imu0.generate_rotation_dodec(pos_count)
     elif mode == 2:
         params = imu_from_config(conf_name)
@@ -102,12 +102,12 @@ def testing(mode, calc_mode, debug=False, log_name='', conf_name='',
         print()
         tM = imu0.F
         M = imu1.F
-        print(f'Phi xz: {relative_error(M[0, 2], tM[0, 2]):.2f}%')
-        print(f'Phi yx: {relative_error(M[1, 0], tM[1, 0]):.2f}%')
-        print(f'Phi xy: {relative_error(M[0, 1], tM[0, 1]):.2f}%')
-        print(f'Phi yz: {relative_error(M[1, 2], tM[1, 2]):.2f}%')
-        print(f'Phi zx: {relative_error(M[2, 0], tM[2, 0]):.2f}%')
-        print(f'Phi zy: {relative_error(M[2, 1], tM[2, 1]):.2f}%')
+        print(f'Phi xz: {absolute_error(M[0, 2], tM[0, 2]):.2f}')
+        print(f'Phi yx: {absolute_error(M[1, 0], tM[1, 0]):.2f}')
+        print(f'Phi xy: {absolute_error(M[0, 1], tM[0, 1]):.2f}')
+        print(f'Phi yz: {absolute_error(M[1, 2], tM[1, 2]):.2f}')
+        print(f'Phi zx: {absolute_error(M[2, 0], tM[2, 0]):.2f}')
+        print(f'Phi zy: {absolute_error(M[2, 1], tM[2, 1]):.2f}')
         print(average_accel_diff(w1, w2))
         print(avg_criteria(w2))
 

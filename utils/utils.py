@@ -11,7 +11,7 @@ def log_reader(f_name):
     n = int(f.readline())
     raw_data = []
     for i in range(n):
-        r = np.array([[int(x) for x in f.readline().split()]]).T
+        r = np.array([[int(x) for x in f.readline().split()]], dtype=np.double).T
         raw_data.append(r)
     return raw_data
 

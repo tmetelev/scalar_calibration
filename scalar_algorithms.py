@@ -72,26 +72,26 @@ def nmnk(r, params):
     noise = params[1]
 
     n = len(r)
-    q = np.array([[1, 1, 1] + [0] * 9]).T
-    G2 = np.ones((n, 1)) * 9.81 * 9.81
-    H = np.zeros((n, 12))
-    W2 = np.zeros((n, 1))
+    q = np.array([[1, 1, 1] + [0] * 9], dtype=np.double).T
+    G2 = np.ones((n, 1), dtype=np.double) * 9.81 * 9.81
+    H = np.zeros((n, 12), dtype=np.double)
+    W2 = np.zeros((n, 1), dtype=np.double)
     imu = Imu()
 
     # accuracy
-    P_B = np.zeros((12, 12))
+    P_B = np.zeros((12, 12), dtype=np.double)
     R_r = np.diag([noise ** 2] * 3)
-    K = np.zeros((3, 3))
+    K = np.zeros((3, 3), dtype=np.double)
 
     for i in range(iterations):
         imu.update_inv(q.T.tolist()[0])
         # accuracy
         R_K = P_B[:9, :9]
-        R_K = np.array([R_K[0], R_K[3], R_K[4], R_K[5], R_K[1], R_K[6], R_K[7], R_K[8], R_K[2]])
+        R_K = np.array([R_K[0], R_K[3], R_K[4], R_K[5], R_K[1], R_K[6], R_K[7], R_K[8], R_K[2]], dtype=np.double)
         R_W0 = P_B[9:, 9:]
         K = imu.K
         W0 = imu.W0
-        R_nW = np.zeros((n, n))
+        R_nW = np.zeros((n, n), dtype=np.double)
 
         for j in range(n):
             rx = r[j][0, 0]
@@ -103,11 +103,10 @@ def nmnk(r, params):
                                  pW[0, 0] * ry, pW[0, 0] * rz,
                                  pW[1, 0] * rx, pW[1, 0] * rz,
                                  pW[2, 0] * rx, pW[2, 0] * ry,
-                                 pW[0, 0], pW[1, 0], pW[2, 0]])
+                                 pW[0, 0], pW[1, 0], pW[2, 0]], dtype=np.double)
             # accuracy
             E3 = np.diag([1] * 3)
-            R_W = K @ R_r @ K.T
-            # R_W = K @ R_r @ K.T + np.kron(r[j].T, E3) @ R_K @ np.kron(r[j], E3) + R_W0
+            R_W = K @ R_r @ K.T #+ np.kron(r[j].T, E3) @ R_K @ np.kron(r[j], E3) + R_W0
             R_nW[j, j] = np.sqrt(R_W[0, 0] ** 2 + R_W[1, 1] ** 2 + R_W[2, 2] ** 2)
         dq = np.linalg.pinv(H) @ (G2 - W2)
         # print(dq.tolist())
